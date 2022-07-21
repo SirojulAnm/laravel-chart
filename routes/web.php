@@ -24,4 +24,9 @@ Route::get('peta-delete', [ContentController::class, 'petaDelete']);
 
 Route::get('monitoring', [ContentController::class, 'monitoring']);
 Route::post('monitoring-upload', [ContentController::class, 'monitoringUpload']);
+Route::get('monitoring-data', [ContentController::class, 'monitoringData']);
 Route::get('monitoring-delete', [ContentController::class, 'monitoringDelete']);
+
+Route::get('actual-vs-bbc', [ContentController::class, 'actualvsbbc']);
+Route::post('actual-vs-bbc-upload', [ContentController::class, 'actualvsbbcUpload']);
+Route::get('actual-vs-bbc-delete', [ContentController::class, 'actualvsbbcDelete']);

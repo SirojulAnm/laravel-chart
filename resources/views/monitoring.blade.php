@@ -22,6 +22,9 @@
             <li class="nav-item active">
               <a class="nav-link" href="{{ url('monitoring') }}">Monitoring</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url('actual-vs-bbc') }}">Actual vs BBC</a>
+            </li>
           </ul>
         </div>
     </nav>
@@ -40,46 +43,74 @@
             {!! Session::get('message') !!}
         </div>
         @endif
-        <h2 class="mb-4">
+        <h2 class="mb-2">
             Monitoring Panen Harian
         </h2>
-        <form action="{{ url('monitoring-upload') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ url('monitoring-upload') }}" method="POST" enctype="multipart/form-data" class="mb-4">
             @csrf
-            <div class="form-group mb-4" style="max-width: 500px; margin: 0 auto;">
+            <div class="form-group mb-1" style="max-width: 500px; margin: 0 auto;">
                 <div class="custom-file text-left">
                     <input type="file" name="upload_file" class="custom-file-input" id="customFile" required>
                     <label class="custom-file-label" for="customFile">Choose file</label>
                 </div>
             </div>
             <button class="btn btn-primary">Import data</button>
-            <a class="btn btn-success" href="{{ url('peta-delete') }}">Delete data</a>
+            <a class="btn btn-success" href="{{ url('monitoring-delete') }}">Delete data</a>
         </form>
-        <canvas id="myChart" style="width:200%;max-width:800px"></canvas>
+        <canvas id="myChart" style="width:200%;max-width:800px;margin: 0 auto;"></canvas>
+        <label>Tanggal</label>
     </div>
 <script>
-var tanggal = "{{ json_encode($tanggal) }}";
-var actual = "{{ json_encode($actual) }}";
-console.log(tanggal);
-console.log(actual);
 
-var xValues = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31];
-
-new Chart("myChart", {
-    type: "line",
-    data: {
-        labels: xValues,
-        datasets: [
-            {
-                data: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],
-                borderColor: "red",
-                fill: false
-            },
-        ]
-    },
-    options: {
-        legend: {display: false}
-    }
-});
+fetch('http://localhost/testtap/public/monitoring-data')
+    .then(function(response) { return response.json(); })
+    .then(function(response) {
+        if (response.code != 200) {
+            console.log(response);
+        } else {
+            console.log(response);
+            var xValues = response.data.tanggal;
+            new Chart("myChart", {
+                type: "line",
+                data: {
+                    labels: xValues,
+                    datasets: [
+                        {
+                            data: response.data.actual,
+                            borderColor: "red",
+                            fill: false,
+                            label: 'actual',
+                        },
+                        {
+                            data: response.data.target,
+                            borderColor: "green",
+                            fill: false,
+                            label: 'target',
+                        },
+                        {
+                            data: response.data.bbc,
+                            borderColor: "blue",
+                            fill: false,
+                            label: 'bbc',
+                        },
+                        {
+                            data: response.data.average_actual,
+                            borderColor: "yellow",
+                            fill: false,
+                            label: 'average_actual',
+                        }
+                    ]
+                },
+                options: {
+                    legend: {display: false},
+                    title: {
+                        display: true,
+                        text: "Monitoring Panen Harian"
+                    }
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>

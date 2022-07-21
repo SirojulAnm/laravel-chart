@@ -13,4 +13,11 @@ class Monitoring extends Model
     protected $fillable   = [
         'code_ba','tanggal','actual','target','bbc','average_actual'
     ];
+
+    protected $casts = [
+        'actual' => 'float',
+        'target' => 'float',
+        'bbc'    => 'float',
+        'average_actual' => 'float',
+    ];
 }

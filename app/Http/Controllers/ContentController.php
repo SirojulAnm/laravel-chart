@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Session;
 use App\Models\Color;
 use App\Models\Monitoring;
+use App\Models\ActualVsBbc;
+use DB;
 
 class ContentController extends Controller
 {
@@ -64,14 +66,26 @@ class ContentController extends Controller
 
     public function monitoring()
     {
-        $tanggal  = Monitoring::get()->pluck('tanggal')->toArray();
-        $actual   = Monitoring::get()->pluck('actual')->toArray();
+        return view('monitoring');
+    }
+
+    public function monitoringData()
+    {
+        $tanggal  = Monitoring::get()->pluck('tanggal');
+        $actual   = Monitoring::get()->pluck('actual');
         $target   = Monitoring::get()->pluck('target');
         $bbc      = Monitoring::get()->pluck('bbc');
         $average_actual = Monitoring::get()->pluck('average_actual');
 
-        // return $average_actual;
-        return view('monitoring', compact('tanggal','actual','target', 'bbc', 'average_actual'));
+        $data = [
+            'tanggal' => $tanggal,
+            'actual'  => $actual,
+            'target'  => $target,
+            'bbc'     => $bbc,
+            'average_actual' => $average_actual
+        ];
+
+        return response()->json(['code' => 200, 'data' => $data], 200);
     }
 
     public function monitoringUpload(Request $request) 
@@ -119,6 +133,56 @@ class ContentController extends Controller
     public function monitoringDelete()
     {
         Monitoring::truncate();
+
+        return redirect()->back()->with('message', 'Berhasil delete data');
+    }
+
+    public function actualVsBbc()
+    {
+        $ActualVsBbc = ActualVsBbc::sum('actual_vs_bbc');
+        $ActualVsBbcSum = ActualVsBbc::get()->count();
+        $actual = @($ActualVsBbc / $ActualVsBbcSum);
+
+        return view('actualVsBbc', compact('actual'));
+    }
+
+    public function actualvsbbcUpload()
+    {
+        // return request()->file('upload_file')->store('tmp');
+        Storage::deleteDirectory('tmp');
+
+        $path = storage_path() . '/app/' . request()->file('upload_file')->store('tmp');
+
+        $reader      = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+        $spreadsheet = $reader->load($path);
+        $sheet       = $spreadsheet->getSheetByName("mtd actual vs bbc %");
+
+        if (empty($sheet)) {
+            return redirect()->back()->with('message_error', "Tidak ada sheet dengan nama mtd actual vs bbc %");
+        }
+
+        $totalRow = $sheet->getHighestRow();
+        $startRow = 2;
+
+        $resultId = [];
+        for ($row = $startRow; $row <= $totalRow; $row++) { 
+            $code_ba       = $sheet->getCell("A" .$row)->getValue();
+            $actual_vs_bbc = $sheet->getCell("B" .$row)->getValue();
+
+            if (!empty($code_ba)) {
+                $data = ActualVsBbc::create([
+                    'code_ba' => $code_ba,
+                    'actual_vs_bbc'  => $actual_vs_bbc,
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('message', 'Berhasil import data');
+    }
+
+    public function actualvsbbcDelete()
+    {
+        ActualVsBbc::truncate();
 
         return redirect()->back()->with('message', 'Berhasil delete data');
     }
